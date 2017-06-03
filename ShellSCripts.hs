@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+
 module ShellScripts where
 
-import qualified Filesystem.Path.CurrentOS as FS  
+import qualified Filesystem.Path.CurrentOS as FS
 import qualified Data.Text as T
 import Control.Monad.IO.Class
 
@@ -29,15 +30,15 @@ getVideoHeight file = shelly $ verbosely $ escaping False $ do
     (run (mkCmd file) []) >>= (return . parseHeight)
   where
     mkCmd :: FS.FilePath -> FS.FilePath
-    mkCmd f = FS.decode $ "mediainfo -f \"" `T.append` (FS.encode f) `T.append` "\" | egrep -E 'Height' | head -1 | ruby -e 'STDIN.each_line {|i| STDOUT.puts /^.+: (\\d+).*$/.match(i)[1]}'"    
+    mkCmd f = FS.decode $ "mediainfo -f \"" `T.append` (FS.encode f) `T.append` "\" | egrep -E 'Height' | head -1 | ruby -e 'STDIN.each_line {|i| STDOUT.puts /^.+: (\\d+).*$/.match(i)[1]}'"
 
 getVideoWidth :: MonadIO m => FS.FilePath -> m (Maybe Int)
 getVideoWidth file = shelly $ verbosely $ escaping False $ do
     (run (mkCmd file) []) >>= (return . parseHeight)
   where
     mkCmd :: FS.FilePath -> FS.FilePath
-    mkCmd f = FS.decode $ "mediainfo -f \"" `T.append` (FS.encode f) `T.append` "\" | egrep -E 'Width' | head -1 | ruby -e 'STDIN.each_line {|i| STDOUT.puts /^.+: (\\d+).*$/.match(i)[1]}'"        
-  
+    mkCmd f = FS.decode $ "mediainfo -f \"" `T.append` (FS.encode f) `T.append` "\" | egrep -E 'Width' | head -1 | ruby -e 'STDIN.each_line {|i| STDOUT.puts /^.+: (\\d+).*$/.match(i)[1]}'"
+
 
 -- outDir -> file -> filenameModifier
 doTrimVideo :: MonadIO m => FS.FilePath -> (T.Text -> T.Text) -> MediaFile -> m ()
@@ -46,13 +47,13 @@ doTrimVideo outDir modifier file = shelly $ verbosely $ escaping False $ do
   where
     mkCmd :: MediaFile -> FS.FilePath
 --ffmpeg -i videoplayback.3gp  -vcodec copy -acodec copy -ss 00:23:00.000 -t 00:35:00.000 rt.3gp
-    mkCmd f = FS.decode $ "ffmpeg -i \"" `T.append` 
+    mkCmd f = FS.decode $ "ffmpeg -i \"" `T.append`
                           ((FS.encode . path) f ) `T.append`
                           "\" " `T.append`
                           mediaFileSpecificOptions `T.append`
-                          " -ss " `T.append` 
-                          ((T.pack . show . beginTime) f) `T.append` 
-                          " -t " `T.append` 
+                          " -ss " `T.append`
+                          ((T.pack . show . beginTime) f) `T.append`
+                          " -t " `T.append`
                           ((T.pack . show . mediaFileLength) f) `T.append`
                           " \"" `T.append`
                           outFilePath `T.append` "\""
@@ -64,11 +65,11 @@ doTrimVideo outDir modifier file = shelly $ verbosely $ escaping False $ do
                           (Just e)  -> e
                           _         -> T.empty
             bTimeExt    = (T.pack . show . unMediaTime . beginTime) f
-            eTimeExt    = (T.pack . show . unMediaTime . endTime) f        
+            eTimeExt    = (T.pack . show . unMediaTime . endTime) f
             newFilename = FS.addExtensions bName [bTimeExt, eTimeExt, ext]
         mediaFileSpecificOptions = if (isBlackVideo file) then "" else " -vcodec copy -acodec copy "
-            
-            
+
+
 mvFile :: MonadIO m => FS.FilePath -> FS.FilePath -> m ()
 mvFile outDir file = shelly $ verbosely $ escaping False $ do
     mv file outDir
