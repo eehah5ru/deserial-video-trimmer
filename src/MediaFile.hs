@@ -1,14 +1,14 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module MediaFile 
+module MediaFile
 (
   MediaTime,
   mkZeroTime,
   parseMediaTime,
   unMediaTime,
   toSeconds,
-  
+
   MediaFile,
   mkMediaFile,
   shuffleInFile,
@@ -23,14 +23,15 @@ module MediaFile
   parseHeight
 ) where
 
-import qualified Filesystem.Path.CurrentOS as FS
+-- import qualified Filesystem.Path.CurrentOS as FS
+import qualified System.FilePath as FS
 import qualified Data.Text as T
 import Safe (readMay)
 import Control.Monad
 import System.Random
 import Control.Monad.Random
 import Data.Monoid
- 
+
 -- in milliseconds
 newtype MediaTime = MediaTime Int deriving (Eq, Ord, Num)
 
@@ -49,7 +50,7 @@ milliseconds (MediaTime mils) = mils `mod` 1000
 toHours :: Int -> MediaTime
 toHours x = MediaTime $ x * 1000 * 3600
 
-toMinutes :: Int -> MediaTime 
+toMinutes :: Int -> MediaTime
 toMinutes x = MediaTime $ x * 1000 * 60
 
 toSeconds :: Int -> MediaTime
@@ -63,55 +64,55 @@ instance Show MediaTime where
     where
       justify'  = T.justifyRight 2 '0'
       justify'' = T.justifyRight 3 '0'
-     
-     
-      
+
+
+
 instance Bounded MediaTime where
   minBound = mkZeroTime
-  maxBound = MediaTime maxBound  
-  
-  
-  
+  maxBound = MediaTime maxBound
+
+
+
 instance Random MediaTime where
   -- randomR :: RandomGen g => (a, a) -> g -> (a, g)
   randomR (MediaTime lo, MediaTime hi) g = let (x, g') = randomR (lo, hi) g in
                           (MediaTime x, g')
-    
+
   -- random :: RandomGen g => g -> (a, g)
   random g = let (x, g') = randomR (0, maxBound) g in
               (MediaTime x, g')
-  
-  
-              
+
+
+
 instance Monoid MediaTime where
   mempty = mkZeroTime
-  
-  mappend (MediaTime x) (MediaTime y) = MediaTime $ x + y              
-      
+
+  mappend (MediaTime x) (MediaTime y) = MediaTime $ x + y
+
 
 parseMediaTime :: T.Text -> Maybe MediaTime
 parseMediaTime t = readMillis t mkZeroTime >>= uncurry readHMS
 
-  
+
 readMillis :: T.Text -> MediaTime -> Maybe (T.Text, MediaTime)
 readMillis xs time  | (length . T.splitOn ".") xs == 2 = let rest:millis:[] = T.splitOn "." xs in
                                                             case ((readMay . T.unpack) millis :: Maybe Int) of
                                                               Nothing -> Nothing
                                                               Just x  -> Just (rest, time + (toMillis x))
-                     |  otherwise                      = Nothing                                       
-                      
+                     |  otherwise                      = Nothing
+
 readHMS :: T.Text -> MediaTime -> Maybe MediaTime
 readHMS xs time = let parts = T.splitOn ":" xs in
                     foldM func' time (zip parts [toHours, toMinutes, toSeconds])
   where
     readMay' :: T.Text -> Maybe Int
     readMay' = readMay . T.unpack
-    
-    func' t (s, f) = case readMay' s of 
+
+    func' t (s, f) = case readMay' s of
                       Nothing -> Nothing
                       Just x -> Just $ t + (f x)
-  
-  
+
+
 unMediaTime :: MediaTime -> Int
 unMediaTime (MediaTime x) = x
 
@@ -150,4 +151,3 @@ shuffleInFile minLen maxLen file = do
                                                   | otherwise             = maxLen
                                           minLen' | minLen > endTime file = endTime file
                                                   | otherwise             = minLen
-
