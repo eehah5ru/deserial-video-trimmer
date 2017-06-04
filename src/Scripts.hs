@@ -15,8 +15,8 @@ import FilePath
 import Utils
 import Files
 
-trim :: Int -> SystemFilePath -> SystemFilePath -> IO ()
-trim nFiles inDir outDir =
+trim :: Int -> Int -> Int -> SystemFilePath -> SystemFilePath -> IO ()
+trim nFiles minDur maxDur inDir outDir =
   do
     g <- newStdGen
     g1 <- newStdGen
@@ -30,23 +30,23 @@ trim nFiles inDir outDir =
         $= conduitLimit nFiles
         =$= conduitSimpleMkMediaFile
         =$= conduitSetDuration
-        =$= conduitShuffleInFile g ((toSeconds 5), (toSeconds 10)) (toSeconds 0, toSeconds 0)
+        =$= conduitShuffleInFile g ((toSeconds minDur), (toSeconds maxDur)) (toSeconds 0, toSeconds 0)
         =$= conduitTrimVideos outDir 1
         -- =$= conduitShow
         $$ CL.consume
     putStrLn $ show r
 
 
-trimInteractive :: IO ()
-trimInteractive =
-  do inDir <- ask "input dir: " >>= return . toSystemFP
-     outDir <- ask "output dir: " >>= return . toSystemFP
-     n <- ask "videos count: " >>= return . (read :: String -> Int)
-     trim n inDir outDir
-  where
-    ask m =
-      do putStr m
-         getLine
+-- trimInteractive :: IO ()
+-- trimInteractive =
+--   do inDir <- ask "input dir: " >>= return . toSystemFP
+--      outDir <- ask "output dir: " >>= return . toSystemFP
+--      n <- ask "videos count: " >>= return . (read :: String -> Int)
+--      trim n inDir outDir
+--   where
+--     ask m =
+--       do putStr m
+--          getLine
 -- for main
 -- runResourceT $ cc =$= conduitTrimVideos outDir $$ CL.consume
 -- let cc =  sourceFileNames $= conduitFilterVideos ["mp4", "mov", "flv"]  =$= conduitLimit 10 =$= conduitMkMediaFile =$= conduitSetDuration =$= conduitShuffleInFile g (toSeconds 5) (toSeconds 10)
