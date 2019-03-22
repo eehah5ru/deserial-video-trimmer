@@ -231,7 +231,9 @@ trimVideosNTimes inDir outDir pathToBlack probBlack lenBounds blackLenBounds cou
     g1 <- newStdGen
     g1 <- newStdGen
     g3 <- newStdGen
-    files <- runResourceT $ sourceFileNames inDir =$= conduitFilterFiles ["mp4", "mov", "flv"] $$ CL.consume
+    files <- runResourceT $ sourceFileNames inDir =$= conduitFilterFiles [".mp4", ".mov", ".flv"] $$ CL.consume
+    -- debug file names
+    putStrLn $ "source files: " ++ (show files)
     runResourceT $ sourceRandomFilesFromList files g1 $=
                     conduitLimit count =$=
                       conduitMkMediaFile g1 pathToBlack' probBlack =$=

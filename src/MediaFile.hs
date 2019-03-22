@@ -84,10 +84,11 @@ instance Random MediaTime where
 
 
 
+instance Semigroup MediaTime where
+  (<>) (MediaTime x) (MediaTime y) = MediaTime (x + y)
+
 instance Monoid MediaTime where
   mempty = mkZeroTime
-
-  mappend (MediaTime x) (MediaTime y) = MediaTime $ x + y
 
 
 parseMediaTime :: T.Text -> Maybe MediaTime
