@@ -32,7 +32,7 @@ getDuration file = shelly $ verbosely $ escaping False $ do
     mkCmd :: FilePath -> FilePath
     mkCmd f = fromText $ "mediainfo -f \""
                       `T.append` (toTextIgnore f)
-                      `T.append` "\" |egrep -E 'Duration\\s+: \\d\\d:\\d\\d' | head -1"
+                      `T.append` "\" |egrep -E 'Duration\\s+: [0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]+$' | head -1"
 
 getVideoHeight :: MonadIO m => FilePath -> m (Maybe Int)
 getVideoHeight file = shelly $ verbosely $ escaping False $ do
