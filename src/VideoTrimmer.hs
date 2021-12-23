@@ -2,29 +2,30 @@
 
 module VideoTrimmer where
 
-import Prelude hiding (FilePath)
+import           Prelude                      hiding (FilePath)
 
-import qualified Data.Text as T
-import System.Random
-import Control.Monad.Random
-import Data.Conduit
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Resource
-import qualified Data.Conduit.Combinators as CC
-import qualified Data.Conduit.List as CL (sourceList, consume, isolate)
+import           Control.Monad.IO.Class
+import           Control.Monad.Random
+import           Control.Monad.Trans.Resource
+import           Data.Conduit
+import qualified Data.Conduit.Combinators     as CC
+import qualified Data.Conduit.List            as CL (consume, isolate,
+                                                     sourceList)
+import qualified Data.Text                    as T
+import           System.Random
 
 -- import qualified Filesystem.Path.CurrentOS as FS
 -- import qualified System.FilePath.Posix as FS
-import qualified System.FilePath as FS
+import qualified System.FilePath              as FS
 
 -- import System.FilePath (FilePath)
 -- import Shelly (FilePath, fromText, toTextIgnore)
 
-import FilePath
-import MediaFile
-import qualified ShellScripts as SH
-import Utils
-import Files
+import           FilePath
+import           Files
+import           MediaFile
+import qualified ShellScripts                 as SH
+import           Utils
 
 conduitSimpleMkMediaFile :: (Monad m) => Conduit SystemFilePath m MediaFile
 conduitSimpleMkMediaFile = CC.map mkMediaFile
@@ -58,8 +59,8 @@ conduitSetDuration = CC.mapM setDuration
     setDuration file = do
                         d <- SH.getDuration $ toShellyFP $ path file
                         case d of
-                          Nothing   -> return file
-                          Just dur  -> return $ file {endTime = dur}
+                          Nothing  -> return file
+                          Just dur -> return $ file {endTime = dur}
 
 conduitSetVideoHeight :: MonadIO m => Conduit MediaFile m MediaFile
 conduitSetVideoHeight = CC.mapM setVideoHeight
@@ -68,8 +69,8 @@ conduitSetVideoHeight = CC.mapM setVideoHeight
     setVideoHeight file = do
                             h <- SH.getVideoHeight $ toShellyFP $ path file
                             case h of
-                              Nothing   -> return file
-                              Just hh  -> return $ file {height = hh}
+                              Nothing -> return file
+                              Just hh -> return $ file {height = hh}
 
 
 conduitSetVideoWidth :: MonadIO m => Conduit MediaFile m MediaFile
@@ -79,8 +80,8 @@ conduitSetVideoWidth = CC.mapM setVideoWidth
     setVideoWidth file = do
                             w <- SH.getVideoWidth $ toShellyFP $ path file
                             case w of
-                              Nothing   -> return file
-                              Just ww  -> return $ file {width = ww}
+                              Nothing -> return file
+                              Just ww -> return $ file {width = ww}
 
 
 -- conduitMaybeChangeToBlackVideo :: (Monad m, RandomGen g) => g -> FS.FilePath -> Conduit
@@ -226,7 +227,14 @@ type LengthBounds = (Int, Int)
 type LengthBoundsMT = (MediaTime, MediaTime)
 
 -- inDir -> outDir -> pathToBlack -> probBlack -> videoLengthBounds -> blackVideoLengthBounds -> count
-trimVideosNTimes :: InDir -> OutDir -> PathToBlackVideo -> ProbBlack -> LengthBounds -> LengthBounds -> VideosCount -> IO ()
+trimVideosNTimes :: InDir
+                 -> OutDir
+                 -> PathToBlackVideo
+                 -> ProbBlack
+                 -> LengthBounds
+                 -> LengthBounds
+                 -> VideosCount
+                 -> IO ()
 trimVideosNTimes inDir outDir pathToBlack probBlack lenBounds blackLenBounds count = do
     g1 <- newStdGen
     g1 <- newStdGen

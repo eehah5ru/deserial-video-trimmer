@@ -1,10 +1,11 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings          #-}
 
 module MediaFile
 (
   MediaTime,
   mkZeroTime,
+  mkSecs,
   parseMediaTime,
   unMediaTime,
   toSeconds,
@@ -24,13 +25,13 @@ module MediaFile
 ) where
 
 -- import qualified Filesystem.Path.CurrentOS as FS
-import qualified System.FilePath as FS
-import qualified Data.Text as T
-import Safe (readMay)
-import Control.Monad
-import System.Random
-import Control.Monad.Random
-import Data.Monoid
+import           Control.Monad
+import           Control.Monad.Random
+import           Data.Monoid
+import qualified Data.Text            as T
+import           Safe                 (readMay)
+import qualified System.FilePath      as FS
+import           System.Random
 
 -- in milliseconds
 newtype MediaTime = MediaTime Int deriving (Eq, Ord, Num)
@@ -111,7 +112,7 @@ readHMS xs time = let parts = T.splitOn ":" xs in
 
     func' t (s, f) = case readMay' s of
                       Nothing -> Nothing
-                      Just x -> Just $ t + (f x)
+                      Just x  -> Just $ t + (f x)
 
 
 unMediaTime :: MediaTime -> Int
@@ -123,6 +124,8 @@ mkZeroTime = MediaTime 0
 mkMediaTime :: Int -> Int -> Int -> Int -> MediaTime
 mkMediaTime hrs mins secs mils = MediaTime $ mils + 1000 * (secs + 60 * (mins + 60 * hrs))
 
+mkSecs :: Int -> MediaTime
+mkSecs n = mkMediaTime 0 0 n 0
 
 parseHeight :: T.Text -> Maybe Int
 parseHeight = readMay . T.unpack

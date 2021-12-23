@@ -1,6 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 module FilePath (ShellyFilePath
                 ,SystemFilePath
@@ -9,12 +9,12 @@ module FilePath (ShellyFilePath
                 ,fromSystemFP
                 ,toSystemFP) where
 
-import Prelude hiding (FilePath)
+import           Prelude         hiding (FilePath)
 
-import qualified Shelly as Sh --(FilePath, fromText, toTextIgnore)
+import qualified Shelly          as Sh
 import qualified System.FilePath as FS
 
-import qualified Data.Text as T
+import qualified Data.Text       as T
 
 type ShellyFilePath = Sh.FilePath
 type SystemFilePath = FS.FilePath
@@ -36,14 +36,14 @@ instance ShellyFilePathConversions ShellyFilePath where
   fromShellyFP = id
   toShellyFP = id
 
-instance ShellyFilePathConversions FS.FilePath where
-  fromShellyFP = T.unpack . Sh.toTextIgnore
-  toShellyFP = Sh.fromText . T.pack
+-- instance ShellyFilePathConversions FS.FilePath where
+--   fromShellyFP = T.unpack . Sh.toTextIgnore
+--   toShellyFP = Sh.fromText . T.pack
 
 
-instance SystemFilePathConversions FS.FilePath where
-  fromSystemFP = id
-  toSystemFP = id
+-- instance SystemFilePathConversions FS.FilePath where
+--   fromSystemFP = id
+--   toSystemFP = id
 
 instance SystemFilePathConversions ShellyFilePath where
   fromSystemFP = Sh.fromText . T.pack

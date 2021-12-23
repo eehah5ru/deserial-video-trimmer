@@ -3,17 +3,18 @@
 
 module ShellScripts where
 
-import Prelude hiding (FilePath)
+import           Prelude                hiding (FilePath)
 -- import qualified Filesystem.Path.CurrentOS as FS
-import qualified System.FilePath as FS
-import System.Console.CmdArgs
-import System.FilePath ((<.>))
-import qualified Data.Text as T
-import Control.Monad.IO.Class
+import           Control.Monad.IO.Class
+import qualified Data.Text              as T
+import           System.Console.CmdArgs
+import           System.FilePath        ((<.>))
+import qualified System.FilePath        as FS
 
-import Shelly (FilePath, run, shelly, verbosely, escaping, run_, mv, fromText, toTextIgnore)
+import           Shelly                 (FilePath, escaping, fromText, mv, run,
+                                         run_, shelly, toTextIgnore, verbosely)
 
-import MediaFile
+import           MediaFile
 
 
 
@@ -52,23 +53,40 @@ getVideoWidth file = shelly $ verbosely $ escaping False $ do
 
 
 -- outDir -> file -> filenameModifier
-doTrimVideo :: MonadIO m => FilePath -> (T.Text -> T.Text) -> MediaFile -> m ()
+doTrimVideo :: MonadIO m
+            => FilePath
+            -> (T.Text -> T.Text)
+            -> MediaFile
+            -> m ()
 doTrimVideo outDir modifier file = shelly $ verbosely $ escaping False $ do
     (run_ (mkCmd file) [])
   where
     mkCmd :: MediaFile -> FilePath
 --ffmpeg -i videoplayback.3gp  -vcodec copy -acodec copy -ss 00:23:00.000 -t 00:35:00.000 rt.3gp
-    mkCmd f = fromText $ "ffmpeg -i \"" `T.append`
-                                        ((T.pack . path) f ) `T.append`
-                                        "\" " `T.append`
-                                        mediaFileSpecificOptions `T.append`
-                                        " -ss " `T.append`
-                                        ((T.pack . show . beginTime) f) `T.append`
-                                        " -t " `T.append`
-                                        ((T.pack . show . mediaFileLength) f) `T.append`
-                                        " \"" `T.append`
-                                        (toTextIgnore outFilePath) `T.append` "\""
+    mkCmd f = fromText $ "ffmpeg -hwaccel cuda -threads 8 -hwaccel_output_format cuda" `T.append`
+              " -ss " `T.append`
+              (T.pack . show $ roughBeginTime) `T.append`
+              " -i \"" `T.append`
+              ((T.pack . path) f ) `T.append`
+              "\" " `T.append`
+              " -ss " `T.append`
+              (T.pack . show $ preciseBeginTime) `T.append`
+              " -t " `T.append`
+              ((T.pack . show . mediaFileLength) f) `T.append`
+              mediaFileSpecificOptions `T.append`
+              " \"" `T.append`
+              (toTextIgnore outFilePath) `T.append` "\""
       where
+        useRoughBeginTime = (beginTime f) > mkSecs 30
+
+        roughBeginTime =
+          if useRoughBeginTime then
+            (beginTime f) - mkSecs 30
+          else
+            0
+
+        preciseBeginTime = (beginTime f) - roughBeginTime
+
         outFilePath = fromText $ (toTextIgnore outDir) `T.append` (T.pack newFilename)
           where
             bName :: FS.FilePath
@@ -81,7 +99,11 @@ doTrimVideo outDir modifier file = shelly $ verbosely $ escaping False $ do
             eTimeExt    = (show . unMediaTime . endTime) f
             newFilename :: FS.FilePath
             newFilename = bName <.> bTimeExt <.> eTimeExt <.> ext
-        mediaFileSpecificOptions = if (isBlackVideo file) then "" else " -vcodec copy -acodec copy "
+        -- spaces before and after options
+        codecOptions_libx64 = " -c:v libx264 -profile:v high444 -crf 0 -preset:v slow -c:a aac -b:a 320k "
+        codecOptions_nvenc = " -c:v h264_nvenc -cq 0  -b:v 0 -maxrate 120M -profile:v high -surfaces 16 -r 30 -c:a aac -b:a 320k "
+        codecOptions_nvencLossless = " -c:v h264_nvenc -preset lossless -profile:v high -rc-lookahead 8  -rc cbr_hq -cq 0 -b:v 0 -maxrate 120M -bufsize 240M -surfaces 16 -r 30 -c:a aac -b:a 320k "
+        mediaFileSpecificOptions = if (isBlackVideo file) then "" else codecOptions_nvencLossless
 
 
 mvFile :: MonadIO m => FilePath -> FilePath -> m ()
