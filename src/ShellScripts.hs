@@ -63,7 +63,7 @@ doTrimVideo outDir modifier file = shelly $ verbosely $ escaping False $ do
   where
     mkCmd :: MediaFile -> FilePath
 --ffmpeg -i videoplayback.3gp  -vcodec copy -acodec copy -ss 00:23:00.000 -t 00:35:00.000 rt.3gp
-    mkCmd f = fromText $ "ffmpeg -hwaccel cuda -threads 8 -hwaccel_output_format cuda" `T.append`
+    mkCmd f = fromText $ "ffmpeg -hwaccel cuda -threads 8" `T.append`
               " -ss " `T.append`
               (T.pack . show $ roughBeginTime) `T.append`
               " -i \"" `T.append`
