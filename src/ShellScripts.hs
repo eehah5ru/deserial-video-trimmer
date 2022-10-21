@@ -92,7 +92,9 @@ doTrimVideo outDir modifier file = shelly $ verbosely $ escaping False $ do
             bName :: FS.FilePath
             bName       = T.unpack $ modifier $ (T.pack . FS.takeBaseName) $ path f
             ext :: FS.FilePath
-            ext         = FS.takeExtension (path f)
+            -- force use mov to support wav sound
+            -- ext         = FS.takeExtension (path f)
+            ext = "mov"
             bTimeExt :: FS.FilePath
             bTimeExt    = (show . unMediaTime . beginTime) f
             eTimeExt :: FS.FilePath
@@ -102,7 +104,7 @@ doTrimVideo outDir modifier file = shelly $ verbosely $ escaping False $ do
         -- spaces before and after options
         codecOptions_libx64 = " -c:v libx264 -profile:v high444 -crf 0 -preset:v slow -c:a aac -b:a 320k "
         codecOptions_nvenc = " -c:v h264_nvenc -cq 0  -b:v 0 -maxrate 120M -profile:v high -surfaces 16 -r 30 -c:a aac -b:a 320k "
-        codecOptions_nvencLossless = " -c:v h264_nvenc -preset lossless -profile:v high -rc-lookahead 8  -rc cbr_hq -cq 0 -b:v 0 -maxrate 120M -bufsize 240M -surfaces 16 -r 30 -c:a aac -b:a 320k "
+        codecOptions_nvencLossless = " -c:v h264_nvenc -preset lossless -profile:v high -rc-lookahead 8  -rc cbr_hq -cq 0 -b:v 0 -maxrate 120M -bufsize 240M -surfaces 16 -r 30 -c:a pcm_s24le -ar 48000 "
         mediaFileSpecificOptions = if (isBlackVideo file) then "" else codecOptions_nvencLossless
 
 
